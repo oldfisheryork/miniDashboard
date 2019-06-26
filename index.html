@@ -18,6 +18,7 @@
         }
     </style>
     <meta charset='utf-8' />
+
 </head>
 
 <div class="container">
@@ -27,7 +28,9 @@
     <H3>Labels are: </H3>
     <p id="labelTest"></p>
 
+
     <pre id="json"></pre>
+
     <table class="table table-striped table-inbox">
         <thead>
         <tr>
@@ -41,13 +44,13 @@
 
 
 <script type="text/javascript">
+
     var clientId = '515340223486-rcqvdt3ailma24fbak2o80b6k9mnml0j.apps.googleusercontent.com';
     var apiKey = 'AIzaSyAuTa4D8IJ-PEMpLd2S0TpBg58fc-FY6bI';
     var discoveryDocs = ["https://people.googleapis.com/$discovery/rest?version=v1"];
     var scopes = ['https://www.googleapis.com/auth/gmail.readonly', "https://www.googleapis.com/auth/gmail.labels"];
 
     var senderMap = new Map();
-
     var sortedArray = [];
 
     function handleClientLoad() {
@@ -62,11 +65,13 @@
             scope: scopes,
             immediate: true
         }, handleAuthResult); // hardcode here, take care
+
         console.log("handled ? ");
     }
 
     function handleAuthClick() {
         console.log("handleAuth triggered Adam");
+
         gapi.auth.authorize({
             client_id: clientId,
             scope: scopes,
@@ -78,17 +83,37 @@
     }
 
     function handleAuthResult(authResult) {
-        // if have result
-        // never got result ?
         if(authResult && !authResult.error) {
             console.log("I got result ?");
 
-            loadGmailApi();
+            loadGmailApi().then(function (successMessage) {
+                sortResult();
+                console.log(successMessage);
+                var arrayTest = this.sortedArray;
+                document.getElementById("json").innerHTML = JSON.stringify(arrayTest, undefined, 2);
+            });
+
+//        loadGmailApi.then(function(successMessage){
+//            //successMessage的值是上面调用resolve(...)方法传入的值.
+//            //successMessage参数不一定非要是字符串类型，这里只是举个例子
+//            for (const k of this.senderMap.keys()) {
+//                console.log("CNM");
+//                console.log(k);
+//            }
+//
+//            var arrayTest = [['a', 1], ['b', 2]];
+//            arrayTest.push(successMessage);
+//            document.getElementById("json").innerHTML = JSON.stringify(arrayTest, undefined, 2);
+////            document.write("Yay! " + successMessage);
+//        });
+            //    then(function() {
+//        const arrayTest = [['a', 1], ['b', 2]];
+//        document.getElementById("json").innerHTML = JSON.stringify(arrayTest, undefined, 2);
+//    });
 
             $('#authorize-button').remove();
             $('.table-inbox').removeClass("hidden");
         }
-//          if no result
         else {
             $('#authorize-button').removeClass("hidden");
             console.log("no result ?");
@@ -98,19 +123,32 @@
         }
     }
 
+    var myFirstPromise = new Promise(function(resolve, reject) {
+        //当异步代码执行成功时，我们才会调用resolve(...), 当异步代码失败时就会调用reject(...)
+        //在本例中，我们使用setTimeout(...)来模拟异步代码，实际编码时可能是XHR请求或是HTML5的一些API方法.
+        setTimeout(function(){
+            resolve("heyhey"); //代码正常执行！
+        }, 250);
+    });
+
+
     function loadGmailApi() {
-        gapi.client.load('gmail', 'v1', displayInbox);
+        return new Promise(function(resolve, reject) {
+            gapi.client.load('gmail', 'v1', displayInbox);
+            console.log('WOWOWOWOWOOWOWOWO');
+            resolve("haha");
+        });
+    };
 
-//        for (const k of senderMap.keys()) {
-//            console.log("CNM");
-//            console.log(k);
-//        }
+    // myForEach(senderMap);
+    // can only get blank sortedArray
+    //        console.log(this.sortedArray);
+    //        document.getElementById("json").innerHTML = this.sortedArray;
 
-        console.log("loaded ?");
-    }
 
     function displayInbox() {
         var labelID = 'STARRED';
+
         var request = gapi.client.gmail.users.messages.list({
             "userId": "me",
             "labelIds": [labelID]
@@ -125,24 +163,21 @@
                 console.log("here is the shit: ");
                 messageRequest.execute(appendMessageRow);
             });
-
-            console.log("HAHAHAHAHAHAHAHHA");
-
-            console.log(senderMap);
-
-            document.getElementById("json").innerHTML = JSON.stringify(senderMap, undefined, 2);
-
-            //here test the api to get the number of the labels
-            getNumber("STARRED");
-            getNumber("CATEGORY_FORUMS");
-            getNumber("IMPORTANT");
         });
 
-        console.log('WOWOWOWOWOOWOWOWO');
-        // myForEach(senderMap);
-        // can only get blank sortedArray
-        console.log(sortedArray);
+        //here test the api to get the number of the labels
+        getNumber("STARRED");
+        getNumber("CATEGORY_FORUMS");
+        getNumber("IMPORTANT");
+
+        console.log("HAHAHAHAHAHAHAHHA");
+        console.log(this.senderMap);
     }
+
+//    then(function() {
+//        const arrayTest = [['a', 1], ['b', 2]];
+//        document.getElementById("json").innerHTML = JSON.stringify(arrayTest, undefined, 2);
+//    });
 
 
 //    function myForEach(map) {
@@ -152,12 +187,12 @@
 //    })
 //    }
 
-
     function sortResult() {
         var sortable = [];
         console.log('sortResult called me!!!!');
 
-        senderMap.forEach((value, key) => {
+        this.senderMap.forEach((value, key) => {
+            console.log('just do it');
             sortable.push([key, value]);
         });
 
@@ -166,10 +201,9 @@
         });
 
         console.log('final result is : ');
-
         console.log(sortable);
 
-        sortedArray = sortable;
+        this.sortedArray = sortable;
     }
 
     function appendMessageRow(message) {
